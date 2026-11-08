@@ -86,6 +86,8 @@ canvas{position:fixed;inset:0;width:100%;height:100%}#zl,#zr{position:fixed;top:
 /* scroll táctil: el '*{touch-action:none}' global bloqueaba el desplazamiento vertical sobre los hijos del panel (Android); pan-y en todo el contenido scrolleable */
 #eds,#eds *{touch-action:pan-y}#eds{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 #mn .pn,#mn .pn *{touch-action:pan-y}#mn{overscroll-behavior:contain}
+/* barras del editor: el '*{touch-action:none}' bloqueaba el deslizamiento sobre #edsel/#edn (COPIAR, DUPLICAR, BORRAR quedaban fuera de alcance) */
+#edb,#edb *,#eda,#eda *{touch-action:pan-x}#eda,#edb{overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 </style></head><body>
 <canvas id="cv"></canvas><div id="zl"></div><div id="zr"></div><div id="c"></div><div id="j"><div id="k"></div></div>
 <div id="h"><span id="hs"></span><span id="ht"></span></div><div id="m"></div>
@@ -95,7 +97,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%}#zl,#zr{position:fixed;top:
 <div class="b" id="mnpause" style="left:calc(env(safe-area-inset-left,0px) + 120px);top:calc(env(safe-area-inset-top,0px) + 36px);width:44px;height:44px;font-size:16px;display:none">⏸</div>
 <div id="fearV"></div>
 <div id="deadV"><span>SALTA PARA REAPARECER</span></div>
-<div id="edb" class="ed"><button class="eb" data-a="b">+ BLOQUE</button><button class="eb" data-a="r">+ RAMPA</button><button class="eb" data-a="c">+ CHECKPOINT</button><button class="eb" data-a="g">+ META</button><button class="eb" data-a="l">+ ESCALERA</button><button class="eb" data-a="w">+ SWINGBAR</button><button class="eb" data-a="z">+ ZIPLINE</button><button class="eb" id="ed-sv">💾</button><button class="eb" id="ed-mp">📂 MAPAS</button><button class="eb pl" id="ed-pt">▶ PROBAR</button></div>
+<div id="edb" class="ed"><button class="eb" data-a="b">+ BLOQUE</button><button class="eb" data-a="r">+ RAMPA</button><button class="eb" data-a="c">+ CHECKPOINT</button><button class="eb" data-a="p">+ STARTPOS</button><button class="eb" data-a="g">+ META</button><button class="eb" data-a="l">+ ESCALERA</button><button class="eb" data-a="w">+ SWINGBAR</button><button class="eb" data-a="z">+ ZIPLINE</button><button class="eb" id="ed-sv">💾</button><button class="eb" id="ed-mp">📂 MAPAS</button><button class="eb pl" id="ed-pt">▶ PROBAR</button></div>
 <div id="eda" class="ed"><button class="eb" id="ed-un">↶</button><button class="eb" id="ed-re">↷</button><button class="eb" id="ed-mu">MULTI</button><button class="eb" id="ed-ps">PEGAR</button><button class="eb" id="ed-gr">GRID 25</button><div id="edsel"><span id="edn"></span><button class="eb" id="ed-mv">MOVER</button><button class="eb" id="ed-r9">↻ 90°</button><button class="eb" id="ed-aj">AJUSTAR</button><button class="eb" id="ed-cp">COPIAR</button><button class="eb" id="ed-dp">DUPLICAR</button><button class="eb" id="ed-dl">BORRAR</button></div></div>
 <div id="eds" class="ed"><div class="ttl" style="margin-bottom:10px">AJUSTAR</div><div id="edr"></div><button class="eb pl" id="ed-ok">LISTO</button></div>
 <button class="eb" id="ed-bk">✏ EDITOR</button>
@@ -357,7 +359,7 @@ const isFatal=()=>!P.gr&&P.st=='n'&&!P.dv&&P.vy<-FATAL_ANIM;
 // ===== QUICKTURN (basado en Quickturn.lua) =====
 // Suelo: giro de vista de 180° en ~0.15 s (conserva el momento). Aire: si miras hacia donde vas (≥0.85) o hacia atrás (<-0.5) = jumpturn (el BACK DIVE) y si miras de lado no pasa nada.
 // Swingbar: invierte el sentido del balanceo. Wallrun: vertical = giras 180° (y luego saltas de espaldas a la pared); horizontal = giras 115° hacia fuera de la pared.
-// Saltar de un wallrun horizontal con ATRÁS (115°) o con izquierda/derecha (90°) también gira la vista.
+// Saltar de un wallrun horizontal ya NO gira la vista automáticamente (solo cambia la dirección del salto).
 const QT_DUR=.15;
 function qturn(a,d){P.qt=d||QT_DUR;P.qa=a;P.qd=d||QT_DUR}
 function quickTurn(){
@@ -463,7 +465,7 @@ P.vy=P.wel?Math.max(-400,Math.min(25,(P.wt-1.025)*250)):100;
 P.vx=P.wd[0]*P.ws-n[0]*20;P.vz=P.wd[1]*P.ws-n[1]*20;
 if(I.dp){P.st='n';P.ng=PK_CD;return}
 if(I.jp&&el>.05){const fd=F[0]*n[0]+F[1]*n[1],fx=fd<-.3?P.wd[0]:F[0],fz=fd<-.3?P.wd[1]:F[1],s=Math.max(150,P.ws-25);
-P.vx=fx*s+n[0]*30;P.vz=fz*s+n[1]*30;P.vy=250;P.st='n';P.ng=.3;if(I.y<-.25)qturn((P.side||1)*115*Math.PI/180);else if(Math.abs(I.x)>.3)qturn(-Math.sign(I.x)*Math.PI/2);return}
+P.vx=fx*s+n[0]*30;P.vz=fz*s+n[1]*30;P.vy=250;P.st='n';P.ng=.3;return}
 if(e&&Math.abs(e.n[1])<.3){if(Math.abs(e.n[0]-n[0])>.75||Math.abs(e.n[2]-n[1])>.75){P.st='n';P.ng=.3;return}}
 else if(el>.45){P.st='n';P.ng=.3;return}
 if(P.wt<=0){P.st='n';P.ng=PK_CD;return}
@@ -502,7 +504,8 @@ else if(P.lt>=FA.dur(P.cr?'jumpturnlandcrouch':'jumpturnlandstand')){P.st='n';P.
 function plant(dt){P.pt+=dt;P.vx=P.vz=0;P.vy-=600*dt;P.duck=1;move(dt);if(P.pt>=PD){P.st='n';P.duck=hit(P.x,P.y,P.z,72)?1:0}}
 
 function ladTry(F){if(P.ng>0||P.st!='n'||!LAD.length)return false;const want=I.y>.3||(!P.gr&&I.jump);if(!want)return false;
-for(const L of LAD){const dx=P.x-L.x,dz=P.z-L.z,d=dx*L.nx+dz*L.nz,lat=dx*L.nz-dz*L.nx;
+for(const L0 of LAD){const dx=P.x-L0.x,dz=P.z-L0.z;let L=L0;if(dx*L0.nx+dz*L0.nz<0)L=L0.fl||(L0.fl=Object.assign({},L0,{nx:-L0.nx,nz:-L0.nz})); // desde atrás: copia con la normal invertida (se sube igual por cualquiera de los dos lados)
+const d=dx*L.nx+dz*L.nz,lat=dx*L.nz-dz*L.nx;
 if(d<0||d>46||Math.abs(lat)>20||P.y<L.y0-10||P.y>L.y1-50)continue;
 if(-(F[0]*L.nx+F[1]*L.nz)<.82)continue;
 const air=!P.gr;P.st='ladder';P.lad={L,k:'enter',t:0,air,hand:!air,sx:P.x,sy:P.y,sz:P.z,ex:L.x+L.nx*LDIST,ez:L.z+L.nz*LDIST,ey:air?L.y0+Math.max(1,2*Math.round(((P.y-L.y0)/LSTEP-1)/2)+1)*LSTEP:Math.max(P.y,L.y0),yaw:Math.atan2(L.nx,L.nz),by:P.y};
@@ -1473,7 +1476,9 @@ const unit=new T.BoxGeometry(1,1,1);unit.translate(0,.5,0);
 const wed=(()=>{const a=[-.5,0,.5],b=[.5,0,.5],c=[.5,0,-.5],d=[-.5,0,-.5],e=[-.5,1,-.5],f=[.5,1,-.5],g=new T.BufferGeometry();
 g.setAttribute('position',new T.Float32BufferAttribute([a,d,c,a,c,b,a,b,f,a,f,e,d,e,f,d,f,c,a,e,d,b,c,f].flat(),3));g.computeVertexNormals();return g})();
 const UE=new T.EdgesGeometry(unit),WE=new T.EdgesGeometry(wed),EL=new T.LineBasicMaterial({color:0x222233}),SLM=new T.LineBasicMaterial({color:0xffe14a,depthTest:false});
-const DIM={b:[150,100,150],r:[150,80,300],g:[220,20,220],c:[0,0,0],s:[0,0,0],l:[26,220,0],w:[170,150,0],z:[0,180,0]},NAME={b:'BLOQUE',r:'RAMPA',c:'CHECKPOINT',g:'META',s:'INICIO',l:'ESCALERA',w:'SWINGBAR',z:'ZIPLINE'};
+/* STARTPOS: punto de inicio solo para desarrollo (para testear una parte sin pasar todo el nivel). Se usa el seleccionado/último; hay que borrarlos para publicar */
+let spAct=0;const spO=()=>{const a=map?map.o.filter(q=>q.t=='p'):[];return a.find(q=>q.id==spAct)||a[a.length-1]||null};
+const DIM={b:[150,100,150],r:[150,80,300],g:[220,20,220],c:[0,0,0],p:[0,0,0],s:[0,0,0],l:[26,220,0],w:[170,150,0],z:[0,180,0]},NAME={b:'BLOQUE',r:'RAMPA',c:'CHECKPOINT',p:'STARTPOS',g:'META',s:'INICIO',l:'ESCALERA',w:'SWINGBAR',z:'ZIPLINE'};
 // ---- escalera / swingbar / zipline del editor ----
 const PINV=new T.MeshBasicMaterial({visible:false});
 function pclr(rec){const g=rec.g;for(let i=g.children.length-1;i>=0;i--){const c=g.children[i];g.remove(c);if(c.geometry)c.geometry.dispose()}rec.pk.length=0}
@@ -1503,7 +1508,7 @@ for(const o of map.o){const r=OB.get(o.id),g=r&&r.g;
  else if(o.t=='z'){const s=[o.x,o.y+o.h,o.z],e=[o.x2,o.y2+o.h,o.z2],dx=e[0]-s[0],dy=e[1]-s[1],dz=e[2]-s[2],len=Math.hypot(dx,dy,dz);if(len<30)continue;
   const d=[dx/len,dy/len,dz/len];let ux=-d[0]*d[1],uy=1-d[1]*d[1],uz=-d[2]*d[1];const ul=Math.hypot(ux,uy,uz)||1;ux/=ul;uy/=ul;uz/=ul;ZIP.push({s,e,two:false,len,d,u:[ux,uy,uz],g})}}}
 function mk(o){const g=new T.Group(),rec={g,pk:[]};
-if(o.t=='c'||o.t=='s'){const col=o.t=='s'?0x3a7bd5:0x667788,mt=(t)=>new T.MeshBasicMaterial({color:col,transparent:!!t,opacity:t?.2:1,side:T.DoubleSide,depthWrite:!t}),
+if(o.t=='c'||o.t=='s'||o.t=='p'){const col=o.t=='s'?0x3a7bd5:o.t=='p'?0xff8a3a:0x667788,mt=(t)=>new T.MeshBasicMaterial({color:col,transparent:!!t,opacity:t?.2:1,side:T.DoubleSide,depthWrite:!t}),
 pad=new T.Mesh(new T.CylinderGeometry(48,48,4,28),mt(0)),bm=new T.Mesh(new T.CylinderGeometry(30,30,197,20,1,true),mt(1)),ar=new T.Mesh(new T.ConeGeometry(14,36,4),new T.MeshBasicMaterial({color:0xffffff}));
 pad.position.y=2;bm.position.y=98;ar.rotation.x=-Math.PI/2;ar.position.set(0,8,-26);g.add(pad,bm,ar);rec.pk.push(pad,bm);rec.cp={x:o.x,y:o.y,z:o.z,yaw:o.r*D,pad,bm,ar}}
 else if('lwz'.includes(o.t)){propMk(o,rec)}
@@ -1513,10 +1518,10 @@ grp.add(g);OB.set(o.id,rec);refresh(o,1)}
 function refresh(o,q){const r=OB.get(o.id);if(!r)return;if(r.rb)r.rb(o);else{r.g.position.set(o.x,o.y,o.z);r.g.rotation.y=o.r*D}if(r.m)r.m.scale.set(o.w,o.h,o.d);
 if(r.so){const n=sol(o),i=SOL.indexOf(r.so);n.off=r.so.off;if(i>=0)SOL[i]=n;else SOL.push(n);r.so=n}
 if(r.cp){r.cp.x=o.x;r.cp.y=o.y;r.cp.z=o.z;r.cp.yaw=o.r*D}if(!q)dirty()}
-function link(){CPS.length=0;if(WORLD!='c')return;const st=map.o.find(q=>q.t=='s');CPS.push(OB.get(st.id).cp);for(const o of map.o)if(o.t=='c')CPS.push(OB.get(o.id).cp);
+function link(){CPS.length=0;if(WORLD!='c')return;const st=spO()||map.o.find(q=>q.t=='s');CPS.push(OB.get(st.id).cp);for(const o of map.o)if(o.t=='c')CPS.push(OB.get(o.id).cp);
 SOL.length=0;OB.forEach(r=>r.so&&SOL.push(r.so));objLogic()}
 function sync(){OB.forEach((r,id)=>{const o=oo(id),on=ED&&ms.has(id);if(r.sl)r.sl.visible=on;if(r.mats)for(const q of r.mats)q.emissive.setHex(on?0x776600:0);if(r.m)r.m.material.emissive.setHex(on?0x776600:o.t=='g'?0x15804a:0);
-if(r.cp){r.cp.ar.visible=ED;if(ED){const c=on?0xffe14a:o.t=='s'?0x3a7bd5:0x667788;r.cp.pad.material.color.setHex(c);r.cp.bm.material.color.setHex(c);r.cp.bm.material.opacity=.2}}})}
+if(o.t=='s')r.g.visible=!(PLAY&&spO());if(o.t=='p')r.g.visible=ED||(spO()&&spO().id==o.id);if(r.cp){r.cp.ar.visible=ED;if(ED){const c=on?0xffe14a:o.t=='s'?0x3a7bd5:o.t=='p'?(spO()&&spO().id==o.id?0xff8a3a:0x9a5a30):0x667788;r.cp.pad.material.color.setHex(c);r.cp.bm.material.color.setHex(c);r.cp.bm.material.opacity=.2}}})}
 // ---- guardado ----
 const IDX='beatrun_maps_idx',MK=i=>'beatrun_map_'+i;
 function idx(){try{const a=JSON.parse(localStorage.getItem(IDX));if(Array.isArray(a))return a.filter(m=>m&&m.id&&typeof m.name=='string')}catch(e){}return[]}
@@ -1526,7 +1531,7 @@ function load(){if(tmpMap)return tmpMap;if(!cur)return null;try{const j=JSON.par
 function save(q){if(!cur||!map)return;try{localStorage.setItem(MK(cur),JSON.stringify(map));const a=idx(),m=a.find(x=>x.id==cur);if(m){m.upd=Date.now();m.n=map.o.length;wIdx(a)}if(!q)say('«'+curName+'» guardado ✓')}catch(e){say('No se pudo guardar')}}
 function dirty(){clearTimeout(sv);sv=setTimeout(()=>save(1),500)}
 function loadWorld(){OB.forEach(r=>grp.remove(r.g));OB.clear();SOL.length=0;
-const j=load()||{o:[]};map={n:0,o:j.o.filter(o=>o&&'bcrgslwz'.includes(o.t)).map(o=>({id:+o.id|0,t:o.t,x:+o.x||0,y:+o.y||0,z:+o.z||0,r:+o.r||0,w:+o.w||0,h:+o.h||0,d:+o.d||0,...(o.t=='z'?{x2:+o.x2||0,y2:+o.y2||0,z2:+o.z2||0}:{})}))};
+const j=load()||{o:[]};map={n:0,o:j.o.filter(o=>o&&'bcrgslwzp'.includes(o.t)).map(o=>({id:+o.id|0,t:o.t,x:+o.x||0,y:+o.y||0,z:+o.z||0,r:+o.r||0,w:+o.w||0,h:+o.h||0,d:+o.d||0,...(o.t=='z'?{x2:+o.x2||0,y2:+o.y2||0,z2:+o.z2||0}:{})}))};
 for(const o of map.o)map.n=Math.max(map.n,o.id);if(!map.o.some(o=>o.t=='s'))map.o.push({id:++map.n,t:'s',x:0,y:0,z:0,r:0,w:0,h:0,d:0});
 for(const o of map.o)mk(o)}
 // ---- mundo: tutorial <-> creador ----
@@ -1544,7 +1549,7 @@ const selObjs=()=>[...ms].map(oo).filter(Boolean);
 const shift=(o,dx,dy,dz)=>{o.x+=dx;o.y+=dy;o.z+=dz;if(o.t=='z'){o.x2+=dx;o.y2+=dy;o.z2+=dz}};
 function cen(L){let x=0,z=0,yc=0,y0=1e9;for(const o of L){if(o.t=='z'){x+=(o.x+o.x2)/2;z+=(o.z+o.z2)/2;yc+=(o.y+o.y2)/2+o.h/2;y0=Math.min(y0,o.y,o.y2)}else{x+=o.x;z+=o.z;yc+=o.y+(o.h||0)/2;y0=Math.min(y0,o.y)}}const n=L.length||1;return{x:x/n,z:z/n,yc:yc/n,y:y0}}
 function hold(on){grab=on;if(!on)zst=0;OB.forEach(r=>{if(r.so)r.so.off=false});if(on)for(const o of selObjs()){const r=OB.get(o.id);if(r&&r.so)r.so.off=true}}
-function setSel(ids){hold(false);ms=new Set(ids);sel=ids.length?ids[ids.length-1]:0;if(!sel)shOpen=false;ui();if(shOpen)sheet()}
+function setSel(ids){hold(false);ms=new Set(ids);sel=ids.length?ids[ids.length-1]:0;{const q=sel&&oo(sel);if(q&&q.t=='p')spAct=q.id}if(!sel)shOpen=false;ui();if(shOpen)sheet()}
 function pick(id){if(multi){if(!id)return;const a=[...ms],i=a.indexOf(id);if(i>=0)a.splice(i,1);else a.push(id);setSel(a)}else setSel(id?[id]:[])}
 // ---- deshacer / rehacer ----
 const snap=()=>JSON.stringify(map.o);
@@ -1554,7 +1559,7 @@ function applyObjs(a){hold(false);OB.forEach(r=>grp.remove(r.g));OB.clear();SOL.
 function undo(){if(!map||!hist.length){say('Nada que deshacer');return}fut.push(snap());applyObjs(JSON.parse(hist.pop()));say('Deshacer ↶')}
 function redo(){if(!map||!fut.length){say('Nada que rehacer');return}hist.push(snap());applyObjs(JSON.parse(fut.pop()));say('Rehacer ↷')}
 function add(t){commit();const a=aim(),d=DIM[t],o={id:++map.n,t,x:r5(a[0]),y:r5(a[1]),z:r5(a[2]),r:(Math.round(((P.yaw/D)%360+360)%360/15)*15)%360,w:d[0],h:d[1],d:d[2]};
- if(t=='g'){const g=map.o.find(q=>q.t=='g');if(g)rm(g,1)}if(t=='z'){o.x2=o.x;o.y2=o.y;o.z2=o.z}map.o.push(o);mk(o);if(t=='c')link();setSel([o.id]);hold(true);if(t=='z'){zst=1;say('ZIPLINE: toca para fijar el 1er poste, luego toca para el 2º')}ui();dirty()}
+ if(t=='g'){const g=map.o.find(q=>q.t=='g');if(g)rm(g,1)}if(t=='z'){o.x2=o.x;o.y2=o.y;o.z2=o.z}map.o.push(o);mk(o);if(t=='c'||t=='p')link();setSel([o.id]);hold(true);if(t=='p')say('STARTPOS: al PROBAR empiezas aquí · bórralos antes de publicar');if(t=='z'){zst=1;say('ZIPLINE: toca para fijar el 1er poste, luego toca para el 2º')}ui();dirty()}
 const copySel=()=>selObjs().filter(o=>o.t!='s'&&o.t!='g').map(o=>Object.assign({},o));
 function paste(src,off){if(!src.length){say('Nada copiado');return}commit();const c=cen(src);let dx=60,dy=0,dz=60;
  if(!off){const a=aim();dx=r5(a[0])-c.x;dy=r5(a[1])-c.y;dz=r5(a[2])-c.z}
@@ -1600,7 +1605,7 @@ function sheet(){const o=sel&&oo(sel);if(!o)return;const box=$('edr');box.innerH
 window.__exitCreator=function(){if(WORLD=='c')save(1);tmpMap=null;if(window.__undead)__undead();hold(false);sel=0;ms.clear();multi=false;gd=null;useT()};
 function enter(play,id,tmp){tmpMap=tmp||null;cur=tmp?null:id;curName=tmp?tmp.name:((idx().find(m=>m.id==id)||{}).name||'');loadWorld();useC();sel=0;ms.clear();hist.length=0;fut.length=0;grab=false;shOpen=false;CPI=0;setCP(0,1);run=0;T0=0;reset();if(window.__undead)__undead();
 if(play){PLAY=true;ED=false;fromEd=0;FA.tp=false;sync();restartAll();__mnu.enter(1)}else{ED=true;PLAY=false;FA.tp=true;P.y+=60;say('EDITANDO «'+curName+'» · vuela con el joystick · toca un objeto para seleccionarlo');__mnu.enter(0)}ui()}
-function test(){hold(false);edPos={x:P.x,y:P.y,z:P.z,yaw:P.yaw,pit:P.pit};sel=0;ms.clear();ED=false;PLAY=true;fromEd=1;FA.tp=false;shOpen=false;link();ui();restartAll();__mnu.music(1)}
+function test(){hold(false);{const q=spO();if(q)say('Probando desde STARTPOS')}edPos={x:P.x,y:P.y,z:P.z,yaw:P.yaw,pit:P.pit};sel=0;ms.clear();ED=false;PLAY=true;fromEd=1;FA.tp=false;shOpen=false;link();ui();restartAll();__mnu.music(1)}
 function back(){PLAY=false;ED=true;fromEd=0;FA.tp=true;if(window.__undead)__undead();CPI=0;setCP(0,1);run=0;T0=0;reset();if(edPos){P.x=edPos.x;P.y=edPos.y;P.z=edPos.z;P.yaw=edPos.yaw;P.pit=edPos.pit}__mnu.music(0);ui()}
 // vuelo libre en 3a persona
 const _up=window.upd;window.upd=function(dt){if(!ED)return _up(dt);if(window.GAME_PAUSED)return;
@@ -1751,6 +1756,7 @@ async function publish(m){
  if(!sbOK())return mg('mp-msg','La comunidad aún no está configurada');
  if(!sess){$('mn-comm').click();return mg('cm-msg','Crea una cuenta o inicia sesión para publicar tus mapas')}
  let j=null;try{j=JSON.parse(localStorage.getItem(MK(m.id)))}catch(e){}
+ if(j&&Array.isArray(j.o)&&j.o.some(o=>o&&o.t=='p'))return mg('mp-msg','Elimina los STARTPOS antes de publicar (son solo para desarrollo)');
  const c=cleanMap(j);if(!c||!c.o.some(o=>o.t=='g'))return mg('mp-msg','Tu mapa necesita una META para publicarlo');
  if(c.o.length<3)return mg('mp-msg','Agrega al menos un bloque o rampa antes de publicar');
  mg('mp-msg','Comprobando…',1);
