@@ -27,7 +27,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%}#zl,#zr{position:fixed;top:
 .ttl{font-size:clamp(16px,4vh,22px);font-weight:800;letter-spacing:.15em}
 .row{width:100%;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
 .row label{font-size:14px}.row output{color:#7dff9a;font-variant-numeric:tabular-nums}
-.row input{grid-column:1/-1;width:100%;accent-color:#7dff9a;height:28px;margin:0;touch-action:pan-x}
+.row input{grid-column:1/-1;width:100%;accent-color:#7dff9a;height:28px;margin:0;touch-action:pan-y}
 .row small{grid-column:1/-1;opacity:.6;font-weight:400;font-size:11px}
 #mntoast{position:fixed;left:50%;top:50%;z-index:60;transform:translate(-50%,-50%) scale(.9);background:rgba(10,14,24,.96);border:2px solid #7dff9a;border-radius:16px;padding:18px 30px;font-size:22px;font-weight:900;letter-spacing:.15em;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;text-align:center}
 #mntoast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
@@ -82,7 +82,10 @@ canvas{position:fixed;inset:0;width:100%;height:100%}#zl,#zr{position:fixed;top:
 #eds .sc .st{flex:0 0 46px;height:40px;border-radius:10px;border:2px solid rgba(255,255,255,.4);background:rgba(255,255,255,.1);color:#fff;font:800 20px system-ui,sans-serif;touch-action:manipulation;padding:0}
 #eds .sc .st:active{background:rgba(125,255,154,.35)}
 #eds .nv{flex:1;min-width:0;height:40px;border-radius:10px;border:2px solid rgba(255,255,255,.4);background:rgba(0,0,0,.45);color:#7dff9a;text-align:center;font:800 16px system-ui,sans-serif;-webkit-user-select:text;user-select:text;touch-action:auto;outline:none}
-#eds .rg{width:100%;accent-color:#7dff9a;height:26px;margin:4px 0 0;touch-action:pan-x}
+#eds .rg{width:100%;accent-color:#7dff9a;height:26px;margin:4px 0 0;touch-action:pan-y}
+/* scroll táctil: el '*{touch-action:none}' global bloqueaba el desplazamiento vertical sobre los hijos del panel (Android); pan-y en todo el contenido scrolleable */
+#eds,#eds *{touch-action:pan-y}#eds{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#mn .pn,#mn .pn *{touch-action:pan-y}#mn{overscroll-behavior:contain}
 </style></head><body>
 <canvas id="cv"></canvas><div id="zl"></div><div id="zr"></div><div id="c"></div><div id="j"><div id="k"></div></div>
 <div id="h"><span id="hs"></span><span id="ht"></span></div><div id="m"></div>
@@ -165,7 +168,7 @@ g.textBaseline='middle';g.fillStyle='#fff';g.font='bold 52px system-ui,Arial,san
 g.textBaseline='alphabetic';g.font='600 34px system-ui,Arial,sans-serif';let y=148;
 for(const ln of lines){const hi=ln[0]=='>';g.fillStyle=hi?'#ffd54a':'#f2f6ff';y=wrapT(g,hi?ln.slice(1):ln,30,y,964,43)}
 const tx=new T.CanvasTexture(cv2);tx.anisotropy=8;
-// Carteles discretos: mas chicos, por encima de la vista (no tapan el horizonte ni el camino), solo se ven de frente (por detras: panel liso) y se desvanecen/ocultan al acercarte
+// Carteles discretos: mas chicos, por encima de la vista (no tapan el horizonte ni el camino), solo se ven de frente (por detras: panel liso)
 const SC=.62,mats=[];
 const pm=new T.MeshBasicMaterial({map:tx,side:T.FrontSide,transparent:true,depthWrite:false}),bk=new T.MeshBasicMaterial({color:0x101a28,side:T.FrontSide,transparent:true,depthWrite:false}),pst=new T.MeshBasicMaterial({color:0x445566,transparent:true,depthWrite:false});mats.push(pm,bk,pst);
 const gr=new T.Group();gr.position.set(cx-(off||0),fy,zc);gr.rotation.y=off?(flip?-Math.PI/2:Math.PI/2):0;S.add(gr);
@@ -173,8 +176,8 @@ const bd=new T.Group();bd.scale.setScalar(SC);gr.add(bd);
 const pl=new T.Mesh(new T.PlaneGeometry(290,145),pm);pl.position.set(0,225,0);bd.add(pl);
 const pb=new T.Mesh(new T.PlaneGeometry(290,145),bk);pb.rotation.y=Math.PI;pb.position.set(0,225,-.6);bd.add(pb);
 for(const s of[-1,1]){const p=new T.Mesh(new T.BoxGeometry(8,230,8),pst);p.position.set(s*152,115,-.3);bd.add(p)}
-(window.__signs=window.__signs||[]).push({g:gr,mats});
-if(!window.__signLoop){window.__signLoop=1;(function sl(){requestAnimationFrame(sl);try{for(const q of window.__signs){const d=Math.hypot(P.x-q.g.position.x,P.z-q.g.position.z),o=Math.max(0,Math.min(1,(d-260)/300))*.92;for(const m of q.mats)m.opacity=o;q.g.visible=o>.02}}catch(e){}})()}
+// Opacidad fija: los carteles se leen siempre (ya no se desvanecen al acercarte). Su visibilidad en tutorial/editor la controlan useT()/useC() vía __tutObjs.
+for(const m of mats)m.opacity=.92;
 }
 function mkCP(x,y,z,title,lines,colr){
 const mt=h=>new T.MeshBasicMaterial({color:0x667788,transparent:!!h,opacity:h?.2:1,side:T.DoubleSide,depthWrite:!h});
